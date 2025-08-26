@@ -58,7 +58,6 @@ export default function NewProject() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Redirect to login if no user
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -82,7 +81,6 @@ export default function NewProject() {
     <div className="space-y-4">
       <h2 className="text-xl font-semibold">Add Project</h2>
       {error && <div className="text-red-600 text-sm">{error}</div>}
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {FIELDS.map(f => (
           <label key={f.key} className="flex flex-col gap-1">
@@ -94,9 +92,7 @@ export default function NewProject() {
                 onChange={e =>
                   handleChange(
                     f.key,
-                    e.target.value === ""
-                      ? null
-                      : e.target.value === "true"
+                    e.target.value === "" ? null : e.target.value === "true"
                   )
                 }
               >
@@ -115,7 +111,6 @@ export default function NewProject() {
           </label>
         ))}
       </div>
-
       <div className="flex justify-end gap-3">
         <Button variant="secondary" onClick={() => router.back()}>
           Back
