@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Button } from "@/components/ui/button";
 
@@ -54,20 +52,22 @@ const FIELDS: Field[] = [
 
 export default function NewProject() {
   const supabase = createClientComponentClient();
-  useEffect(()=>{
-    (async()=>{
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) window.location.href = "/login";
-    })();
-  },[]);
-
   const router = useRouter();
 
   const [form, setForm] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string|null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (key: string, value: any) => setForm(prev => ({ ...prev, [key]: value }));
+  // Redirect to login if no user
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) window.location.href = "/login";
+    })();
+  }, [supabase]);
+
+  const handleChange = (key: string, value: any) =>
+    setForm(prev => ({ ...prev, [key]: value }));
 
   const save = async () => {
     setSaving(true);
@@ -82,6 +82,7 @@ export default function NewProject() {
     <div className="space-y-4">
       <h2 className="text-xl font-semibold">Add Project</h2>
       {error && <div className="text-red-600 text-sm">{error}</div>}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {FIELDS.map(f => (
           <label key={f.key} className="flex flex-col gap-1">
@@ -90,7 +91,14 @@ export default function NewProject() {
               <select
                 className="border rounded-xl px-3 py-2"
                 value={form[f.key] ?? ""}
-                onChange={(e)=>handleChange(f.key, e.target.value === "" ? null : e.target.value === "true")}
+                onChange={e =>
+                  handleChange(
+                    f.key,
+                    e.target.value === ""
+                      ? null
+                      : e.target.value === "true"
+                  )
+                }
               >
                 <option value="">—</option>
                 <option value="true">True</option>
@@ -100,16 +108,21 @@ export default function NewProject() {
               <input
                 className="border rounded-xl px-3 py-2"
                 value={form[f.key] ?? ""}
-                onChange={(e)=>handleChange(f.key, e.target.value)}
+                onChange={e => handleChange(f.key, e.target.value)}
                 placeholder={f.label}
               />
             )}
           </label>
         ))}
       </div>
+
       <div className="flex justify-end gap-3">
-        <Button variant="secondary" onClick={()=>router.back()}>Back</Button>
-        <Button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+        <Button variant="secondary" onClick={() => router.back()}>
+          Back
+        </Button>
+        <Button onClick={save} disabled={saving}>
+          {saving ? "Saving..." : "Save"}
+        </Button>
       </div>
     </div>
   );
