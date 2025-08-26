@@ -58,7 +58,7 @@ export default function ProjectsPage() {
               <Button
                 onClick={() => setOpenId(project.id)}
                 className="w-full justify-start"
-                variant="outline"
+                variant="secondary"
               >
                 {project.customer_name || "Unnamed Project"}
               </Button>
