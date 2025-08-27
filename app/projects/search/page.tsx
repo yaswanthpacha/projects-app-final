@@ -126,13 +126,16 @@ export default function SearchProjects(){
         </CardContent>
       </Card>
 
+      {/* Scrollable Quick View Dialog */}
       <Dialog open={openId !== null} onOpenChange={(o)=>{ if(!o) setOpenId(null); }}>
-        <DialogHeader>
-          <div className="font-semibold">Project #{selected?.id} — {selected?.customer_name || "Untitled"}</div>
-          <button onClick={()=>setOpenId(null)} className="px-2 py-1">✖</button>
-        </DialogHeader>
-        <DialogContent>
-          <div className="space-y-2 text-sm">
+        <DialogContent className="flex flex-col max-h-[80vh] w-full sm:w-[600px]">
+          <DialogHeader>
+            <div className="font-semibold">Project #{selected?.id} — {selected?.customer_name || "Untitled"}</div>
+            <button onClick={()=>setOpenId(null)} className="px-2 py-1">✖</button>
+          </DialogHeader>
+
+          {/* Scrollable body */}
+          <div className="flex-1 overflow-y-auto space-y-2 text-sm p-2">
             {selected && Object.keys(selected).sort().map((key) => (
               <div key={key} className="grid grid-cols-3 gap-3 py-1 border-b">
                 <div className="font-medium col-span-1 break-words">{key}</div>
@@ -140,11 +143,12 @@ export default function SearchProjects(){
               </div>
             ))}
           </div>
+
+          <DialogFooter className="flex gap-2">
+            {selected && <Link href={`/projects/${selected.id}`} className="px-3 py-2 rounded-xl text-sm bg-gray-900 text-white">Open Full Page</Link>}
+            <Button variant="secondary" onClick={()=>setOpenId(null)}>Close</Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogFooter>
-          {selected && <Link href={`/projects/${selected.id}`} className="px-3 py-2 rounded-xl text-sm bg-gray-900 text-white">Open Full Page</Link>}
-          <Button variant="secondary" onClick={()=>setOpenId(null)}>Close</Button>
-        </DialogFooter>
       </Dialog>
     </div>
   );
