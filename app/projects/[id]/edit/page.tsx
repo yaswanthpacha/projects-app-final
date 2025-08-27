@@ -1,128 +1,141 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
-type Field = { key: string; label: string; type?: "text" | "boolean" };
-
-const FIELD_KEYS: Field[] = [
-  { key: "customer_name", label: "Customer Name" },
-  { key: "partner_company_name", label: "Partner Company Name" },
-  { key: "by_industry", label: "Industry" },
-  { key: "by_product", label: "Product" },
-  { key: "by_competitor", label: "Competitor" },
-  { key: "submitter_name", label: "Submitter Name" },
-  { key: "submitter_email", label: "Submitter Email" },
-  { key: "nscorp_customer_id", label: "NSCorp Customer ID" },
-  { key: "implementation_record_number", label: "Implementation Record Number" },
-  { key: "customer_website", label: "Customer Website" },
-  { key: "customer_annual_revenue", label: "Customer Annual Revenue" },
-  { key: "is_customer_live", label: "Is Customer Live", type: "boolean" },
-  { key: "project_completed_last_18_months", label: "Project Completed Last 18 Months", type: "boolean" },
-  { key: "is_customer_referencable", label: "Is Customer Referencable", type: "boolean" },
-  { key: "is_company_public", label: "Is Company Public", type: "boolean" },
-  { key: "is_pe_vc_backed", label: "PE/VC Backed", type: "boolean" },
-  { key: "pe_vc_firm", label: "PE/VC Firm" },
-  { key: "is_association_member", label: "Association Member", type: "boolean" },
-  { key: "association_name", label: "Association Name" },
-  { key: "has_mna", label: "Has M&A", type: "boolean" },
-  { key: "founded_year", label: "Founded Year" },
-  { key: "main_business_lines", label: "Main Business Lines" },
-  { key: "top_challenges", label: "Top Challenges" },
-  { key: "previous_technology", label: "Previous Technology" },
-  { key: "other_technology", label: "Other Technology" },
-  { key: "competitors_in_deal", label: "Competitors in Deal" },
-  { key: "other_competitors", label: "Other Competitors" },
-  { key: "why_chose_netsuite", label: "Why Chose NetSuite" },
-  { key: "netsuite_modules", label: "NetSuite Modules" },
-  { key: "suiteapps_used", label: "SuiteApps Used" },
-  { key: "additional_apps", label: "Additional Apps" },
-  { key: "leveraging_ai", label: "Leveraging AI", type: "boolean" },
-  { key: "ai_usage", label: "AI Usage" },
-  { key: "partner_customizations", label: "Partner Customizations" },
-  { key: "customization_benefits", label: "Customization Benefits" },
-  { key: "implementation_summary", label: "Implementation Summary" },
-  { key: "go_live_duration", label: "Go Live Duration" },
-  { key: "implementation_benefits", label: "Implementation Benefits" },
-  { key: "whats_next", label: "What's Next" },
-  { key: "customer_quote", label: "Customer Quote" }
-];
-
-export default function EditProject(){
-  const supabase = createClientComponentClient();
-  useEffect(()=>{
-    (async()=>{
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) window.location.href = "/login";
-    })();
-  },[]);
-
+export default function EditProject({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const params = useParams();
-  const id = Number(params.id);
-  const [form, setForm] = useState<Record<string, any>>({});
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string|null>(null);
+  const [formData, setFormData] = useState<any>({});
 
-  useEffect(()=>{
-    (async()=>{
-      setLoading(true);
-      const { data, error } = await supabase.from("projects").select("*").eq("id", id).single();
-      if (error) setError(error.message);
-      setForm(data || {});
-      setLoading(false);
-    })();
-  },[id]);
+  useEffect(() => {
+    // Fetch project data by ID
+    const fetchProject = async () => {
+      const res = await fetch(`/api/projects/${params.id}`);
+      const data = await res.json();
+      setFormData(data);
+    };
+    fetchProject();
+  }, [params.id]);
 
-  const handleChange = (key: string, value: any) => setForm(prev => ({ ...prev, [key]: value }));
-
-  const save = async () => {
-    setSaving(true);
-    setError(null);
-    const { error } = await supabase.from("projects").update(form).eq("id", id);
-    setSaving(false);
-    if (error) setError(error.message);
-    else router.push(`/projects/${id}`);
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  if (loading) return <div>Loading…</div>;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await fetch(`/api/projects/${params.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
+    router.push("/projects");
+  };
+
+  // ✅ All 40 project fields
+  const fields = [
+    "Customer Name",
+    "Partner Company Name",
+    "Industry",
+    "Product",
+    "Competitor",
+    "Submitter Name",
+    "Submitter Email",
+    "NSCorp Customer ID",
+    "Implementation Record Number",
+    "Customer Website",
+    "Customer Annual Revenue",
+    "Is Customer Live",
+    "Project Completed Last 18 Months",
+    "Is Customer Referencable",
+    "Is Company Public",
+    "PE/VC Backed",
+    "PE/VC Firm",
+    "Association Member",
+    "Association Name",
+    "Has M&A",
+    "Founded Year",
+    "Main Business Lines",
+    "Headquarters",
+    "Employee Count",
+    "Key Decision Maker",
+    "Decision Maker Title",
+    "Sales Stage",
+    "Deal Size",
+    "Use Case",
+    "Region",
+    "Country",
+    "Implementation Partner",
+    "Project Manager",
+    "Go-Live Date",
+    "Current Status",
+    "Challenges",
+    "Opportunities",
+    "Value Proposition",
+    "Budget",
+    "Funding Source",
+    "Notes", // ✅ textarea
+  ];
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Edit Project #{id}</h2>
-      {error && <div className="text-red-600 text-sm">{error}</div>}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {FIELD_KEYS.map(f => (
-          <label key={f.key} className="flex flex-col gap-1">
-            <span className="text-sm font-medium">{f.label}</span>
-            {f.type === "boolean" ? (
-              <select
-                className="border rounded-xl px-3 py-2"
-                value={form[f.key] === null || form[f.key] === undefined ? "" : String(Boolean(form[f.key]))}
-                onChange={(e)=>handleChange(f.key, e.target.value === "" ? null : e.target.value === "true")}
-              >
-                <option value="">—</option>
-                <option value="true">True</option>
-                <option value="false">False</option>
-              </select>
-            ) : (
-              <input
-                className="border rounded-xl px-3 py-2"
-                value={form[f.key] ?? ""}
-                onChange={(e)=>handleChange(f.key, e.target.value)}
-                placeholder={f.label}
-              />
-            )}
-          </label>
-        ))}
+    <div className="p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold">Edit Project #{params.id}</h2>
+        <Button variant="outline" onClick={() => router.push("/projects")}>
+          ← Back
+        </Button>
       </div>
-      <div className="flex justify-end gap-3">
-        <Button variant="secondary" onClick={()=>router.back()}>Back</Button>
-        <Button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
-      </div>
+
+      {/* Form */}
+      <form
+        onSubmit={handleSubmit}
+        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+      >
+        {fields.map((field) => {
+          const name = field.toLowerCase().replace(/\s+/g, "_");
+          const isTextarea = ["notes", "challenges", "opportunities", "value_proposition", "use_case"].includes(
+            name
+          );
+
+          return (
+            <div
+              key={field}
+              className={isTextarea ? "flex flex-col col-span-2" : "flex flex-col"}
+            >
+              <label className="text-sm font-semibold mb-1">{field}</label>
+              {isTextarea ? (
+                <Textarea
+                  name={name}
+                  value={formData[name] || ""}
+                  onChange={handleChange}
+                  placeholder={field}
+                  className="bg-white text-black placeholder-gray-500"
+                />
+              ) : (
+                <Input
+                  name={name}
+                  value={formData[name] || ""}
+                  onChange={handleChange}
+                  placeholder={field}
+                  className="bg-white text-black placeholder-gray-500"
+                />
+              )}
+            </div>
+          );
+        })}
+
+        {/* Save Button */}
+        <div className="col-span-2 flex justify-end">
+          <Button type="submit" className="px-6 py-2">
+            Save Changes
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
