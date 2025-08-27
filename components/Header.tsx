@@ -2,64 +2,59 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import Image from "next/image";
 
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClientComponentClient();
-  const [theme, setTheme] = useState("light");
-
-  // Load saved theme on first render
-  useEffect(() => {
-    const stored = localStorage.getItem("theme") || "light";
-    setTheme(stored);
-    document.documentElement.classList.add(stored);
-  }, []);
-
-  // Apply theme dynamically
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.remove("light", "dark");
-    root.classList.add(theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
-  };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login"); // redirect to login after logout
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Logout error:", error.message);
+    }
+    router.push("/login");
   };
 
   return (
-    <header className="flex justify-between items-center p-4 shadow-md bg-white dark:bg-gray-900">
-      {/* Left navigation */}
-      <nav className="flex gap-4">
-        <Link href="/" className={pathname === "/" ? "font-bold" : ""}>Dashboard</Link>
-        <Link href="/projects" className={pathname === "/projects" ? "font-bold" : ""}>Projects</Link>
-        <Link href="/search" className={pathname === "/search" ? "font-bold" : ""}>Search</Link>
+    <header className="flex justify-between items-center px-6 py-4 shadow-md bg-black text-white">
+      {/* Left Navigation */}
+      <nav className="flex gap-6">
+        <Link href="/" className={pathname === "/" ? "text-cyan-400" : ""}>
+          Dashboard
+        </Link>
+        <Link
+          href="/projects"
+          className={pathname === "/projects" ? "text-cyan-400" : ""}
+        >
+          Projects
+        </Link>
+        <Link
+          href="/search"
+          className={pathname === "/search" ? "text-cyan-400" : ""}
+        >
+          Search
+        </Link>
       </nav>
 
-      {/* Centered Logo */}
-      <div className="flex-1 flex justify-center">
-        <img src="/logo.png" alt="Zenardy Logo" className="h-12 w-auto object-contain" />
+      {/* Center Logo */}
+      <div className="flex justify-center">
+        <Image
+          src="/logo.png"
+          alt="Zenardy Logo"
+          width={140}
+          height={40}
+          className="object-contain"
+        />
       </div>
 
-      {/* Right side controls */}
+      {/* Right Controls */}
       <div className="flex gap-3">
         <button
-          onClick={toggleTheme}
-          className="px-3 py-1 rounded-lg bg-gray-200 dark:bg-gray-700 dark:text-white"
-        >
-          {theme === "light" ? "🌙 Dark" : "☀️ Light"}
-        </button>
-        <button
           onClick={handleLogout}
-          className="px-3 py-1 rounded-lg bg-red-500 text-white"
+          className="px-3 py-1 rounded-lg border border-red-500 bg-red-600 hover:bg-red-700 text-white transition-colors"
         >
           Logout
         </button>
