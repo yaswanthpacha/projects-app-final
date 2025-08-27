@@ -1,25 +1,18 @@
 import "./globals.css";
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import Header from "@/components/Header"; // Client component
 
-const inter = Inter({ subsets: ["latin"] });
-
-export const metadata: Metadata = {
+export const metadata = {
   title: "Zenardy Projects",
-  description: "Projects Dashboard with Supabase + Next.js 13",
+  description: "Project Management App",
 };
 
-// ✅ force Node.js runtime globally (important for Supabase auth cookies on Vercel)
-export const runtime = "nodejs";
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
-      <body className={inter.className}>{children}</body>
+    <html lang="en">
+      <body className="bg-black text-white">
+        <Header />
+        <main className="p-6 min-h-screen">{children}</main>
+      </body>
     </html>
   );
 }
