@@ -16,6 +16,9 @@ export default function Dashboard() {
         <Link href="/new-project">
           <Button className="rounded-2xl">➕ New Project</Button>
         </Link>
+        <Link href="/projects/search">
+  <Button className="rounded-2xl">🔍 Search Projects</Button>
+</Link>
       </div>
 
       {/* Summary Cards */}
