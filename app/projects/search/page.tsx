@@ -114,10 +114,29 @@ export default function SearchProjects(){
                   <TableRow key={p.id}>
                     {keyCols.map(k => <TableCell key={k}>{String(p[k] ?? "-")}</TableCell>)}
                     <TableCell className="flex gap-2">
-                      <Button variant="ghost" onClick={()=>setOpenId(p.id)} title="Quick view">🔍</Button>
-                      <Link href={`/projects/${p.id}/edit`} className="px-3 py-2 rounded-xl text-sm bg-yellow-500 text-white">✏️ Edit</Link>
-                      <Link href={`/projects/${p.id}`} className="px-3 py-2 rounded-xl text-sm bg-gray-900 text-white">Open</Link>
-                    </TableCell>
+  <Button 
+    variant="outline" 
+    size="sm" 
+    className="flex items-center gap-1 px-2"
+    onClick={()=>setOpenId(p.id)}
+    title="Quick view"
+  >
+    🔍 Quick View
+  </Button>
+  <Link 
+    href={`/projects/${p.id}/edit`} 
+    className="flex items-center gap-1 px-2 py-1 rounded-md text-sm bg-yellow-500 text-white hover:bg-yellow-600"
+  >
+    ✏️ Edit
+  </Link>
+  <Link 
+    href={`/projects/${p.id}`} 
+    className="flex items-center gap-1 px-2 py-1 rounded-md text-sm bg-gray-800 text-white hover:bg-gray-900"
+  >
+    Open
+  </Link>
+</TableCell>
+
                   </TableRow>
                 ))}
               </TableBody>
