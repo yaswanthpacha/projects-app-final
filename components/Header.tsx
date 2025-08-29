@@ -22,7 +22,10 @@ export default function Header() {
     <header className="flex justify-between items-center px-6 py-4 shadow-md bg-black text-white">
       {/* Left Navigation */}
       <nav className="flex gap-6">
-        <Link href="/dashboard" className={pathname === "/dashboard" ? "text-cyan-400" : ""}>
+        <Link
+          href="/dashboard"
+          className={pathname === "/dashboard" ? "text-cyan-400" : ""}
+        >
           Dashboard
         </Link>
         <Link
@@ -36,6 +39,12 @@ export default function Header() {
           className={pathname === "/projects/search" ? "text-cyan-400" : ""}
         >
           Search
+        </Link>
+        <Link
+          href="/prospects"
+          className={pathname === "/prospects" ? "text-cyan-400" : ""}
+        >
+          Prospects
         </Link>
       </nav>
 
