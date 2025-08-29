@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import Link from "next/link";
@@ -34,7 +34,7 @@ const keyCols: (keyof Prospect)[] = [
   "close_date",
   "stage",
   "next_steps",
-  "status"
+  "status",
 ];
 
 export default function ProspectsList() {
@@ -47,7 +47,9 @@ export default function ProspectsList() {
 
   useEffect(() => {
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) router.push("/login");
     })();
   }, [supabase, router]);
@@ -86,12 +88,15 @@ export default function ProspectsList() {
         </div>
       </div>
 
-      <div className="border rounded-xl overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-100">
+      <div className="border rounded-xl overflow-x-auto max-h-[70vh]">
+        <table className="w-full text-sm border-collapse">
+          <thead className="bg-gray-800 text-white sticky top-0 z-10">
             <tr>
               {keyCols.map((k) => (
-                <th key={String(k)} className="text-left px-3 py-2 capitalize">
+                <th
+                  key={String(k)}
+                  className="text-left px-3 py-2 capitalize"
+                >
                   {String(k).replaceAll("_", " ")}
                 </th>
               ))}
@@ -100,42 +105,65 @@ export default function ProspectsList() {
           </thead>
           <tbody>
             {loading && (
-              <tr><td className="text-center py-6" colSpan={keyCols.length + 1}>Loading…</td></tr>
-            )}
-            {!loading && prospects.length === 0 && (
-              <tr><td className="text-center py-6" colSpan={keyCols.length + 1}>No data</td></tr>
-            )}
-            {!loading && prospects.map((p) => (
-              <tr key={p.id} className="border-t">
-                {keyCols.map((k) => (
-                  <td key={String(k)} className="px-3 py-2">
-                    {p[k] === null || p[k] === undefined || p[k] === "" ? "—" : String(p[k])}
-                  </td>
-                ))}
-                <td className="px-3 py-2">
-                  <div className="flex gap-2">
-                    <Link
-                      href={`/prospects/${p.id}/edit`}
-                      className="px-3 py-2 rounded-xl text-sm bg-yellow-500 text-white"
-                    >
-                      ✏️ Edit
-                    </Link>
-                    <Button
-                      className="bg-green-600 hover:bg-green-700"
-                      onClick={() => {
-                        // redirect to project creation with prefill source
-                        if (p.status !== "converted") {
-                          window.location.href = `/projects/new?fromProspect=${p.id}`;
-                        }
-                      }}
-                      disabled={p.status === "converted"}
-                    >
-                      {p.status === "converted" ? "Converted" : "Convert"}
-                    </Button>
-                  </div>
+              <tr>
+                <td
+                  className="text-center py-6"
+                  colSpan={keyCols.length + 1}
+                >
+                  Loading…
                 </td>
               </tr>
-            ))}
+            )}
+            {!loading && prospects.length === 0 && (
+              <tr>
+                <td
+                  className="text-center py-6"
+                  colSpan={keyCols.length + 1}
+                >
+                  No data
+                </td>
+              </tr>
+            )}
+            {!loading &&
+              prospects.map((p) => (
+                <tr
+                  key={p.id}
+                  className="border-t hover:bg-gray-50"
+                >
+                  {keyCols.map((k) => (
+                    <td key={String(k)} className="px-3 py-2">
+                      {p[k] === null ||
+                      p[k] === undefined ||
+                      p[k] === ""
+                        ? "—"
+                        : String(p[k])}
+                    </td>
+                  ))}
+                  <td className="px-3 py-2">
+                    <div className="flex gap-2">
+                      <Link
+                        href={`/prospects/${p.id}/edit`}
+                        className="px-3 py-2 rounded-xl text-sm bg-yellow-500 text-white"
+                      >
+                        ✏️ Edit
+                      </Link>
+                      <Button
+                        className="bg-green-600 hover:bg-green-700"
+                        onClick={() => {
+                          if (p.status !== "converted") {
+                            window.location.href = `/projects/new?fromProspect=${p.id}`;
+                          }
+                        }}
+                        disabled={p.status === "converted"}
+                      >
+                        {p.status === "converted"
+                          ? "Converted"
+                          : "Convert"}
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
