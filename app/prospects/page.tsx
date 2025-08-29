@@ -126,15 +126,10 @@ export default function ProspectsList() {
             )}
             {!loading &&
               prospects.map((p) => (
-                <tr
-                  key={p.id}
-                  className="border-t hover:bg-gray-50"
-                >
+                <tr key={p.id} className="border-t">
                   {keyCols.map((k) => (
                     <td key={String(k)} className="px-3 py-2">
-                      {p[k] === null ||
-                      p[k] === undefined ||
-                      p[k] === ""
+                      {p[k] === null || p[k] === undefined || p[k] === ""
                         ? "—"
                         : String(p[k])}
                     </td>
@@ -156,9 +151,7 @@ export default function ProspectsList() {
                         }}
                         disabled={p.status === "converted"}
                       >
-                        {p.status === "converted"
-                          ? "Converted"
-                          : "Convert"}
+                        {p.status === "converted" ? "Converted" : "Convert"}
                       </Button>
                     </div>
                   </td>
