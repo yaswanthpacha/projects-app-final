@@ -15,9 +15,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader } from "@/components/
 type Project = { [key: string]: any };
 type Prospect = { [key: string]: any };
 
-const projectCols = ["id","customer_name","partner_company_name","by_industry","by_product","by_competitor"];
-const prospectCols = ["id","prospect","ns_sales_rep","industry","stage","status"];
-
 export default function SearchCombined() {
   const supabase = createClientComponentClient();
 
@@ -40,25 +37,33 @@ export default function SearchCombined() {
     setSearched(true);
 
     const terms = search.split(/\s+/).map(t => t.trim()).filter(Boolean);
-
-    // Projects query
-    let pq = supabase.from("projects").select("*").order("id", { ascending: false });
-    if (terms.length) {
-      const filters = terms
-        .map(t => projectCols.map(c => `${c}.ilike.%${t}%`).join(","))
-        .join(",");
-      pq = pq.or(filters);
+    if (!terms.length) {
+      setProjects([]);
+      setProspects([]);
+      setLoading(false);
+      return;
     }
+
+    // --- Projects ---
+    let { data: projectSample } = await supabase.from("projects").select("*").limit(1);
+    const projectAllCols = projectSample?.[0] ? Object.keys(projectSample[0]) : [];
+
+    let pq = supabase.from("projects").select("*").order("id", { ascending: false });
+    const projectFilters = terms
+      .map(t => projectAllCols.map(c => `${c}.ilike.%${t}%`).join(","))
+      .join(",");
+    pq = projectFilters ? pq.or(projectFilters) : pq;
     const { data: p1 } = await pq;
 
-    // Prospects query
+    // --- Prospects ---
+    let { data: prospectSample } = await supabase.from("prospects").select("*").limit(1);
+    const prospectAllCols = prospectSample?.[0] ? Object.keys(prospectSample[0]) : [];
+
     let rq = supabase.from("prospects").select("*").order("id", { ascending: false });
-    if (terms.length) {
-      const filters = terms
-        .map(t => prospectCols.map(c => `${c}.ilike.%${t}%`).join(","))
-        .join(",");
-      rq = rq.or(filters);
-    }
+    const prospectFilters = terms
+      .map(t => prospectAllCols.map(c => `${c}.ilike.%${t}%`).join(","))
+      .join(",");
+    rq = prospectFilters ? rq.or(prospectFilters) : rq;
     const { data: p2 } = await rq;
 
     setProjects(p1 || []);
@@ -66,8 +71,9 @@ export default function SearchCombined() {
     setLoading(false);
   }
 
-  function exportCSV(rows: any[], cols: string[], filename = "data.csv") {
+  function exportCSV(rows: any[], filename = "data.csv") {
     if (!rows.length) return;
+    const cols = Object.keys(rows[0]);
     const worksheet = XLSX.utils.json_to_sheet(rows.map(r => {
       const obj: any = {};
       cols.forEach(c => obj[c] = r[c] ?? "");
@@ -83,8 +89,9 @@ export default function SearchCombined() {
     URL.revokeObjectURL(url);
   }
 
-  function exportPDF(rows: any[], cols: string[], filename = "data.pdf") {
+  function exportPDF(rows: any[], filename = "data.pdf") {
     if (!rows.length) return;
+    const cols = Object.keys(rows[0]);
     const doc = new jsPDF();
     const body = rows.map(r => cols.map(c => String(r[c] ?? "")));
     (doc as any).autoTable({ head: [cols], body, styles: { fontSize: 8 } });
@@ -106,10 +113,10 @@ export default function SearchCombined() {
         />
         <Button onClick={loadSearch} className="bg-blue-600 hover:bg-blue-700 text-white">Search</Button>
         <Button variant="outline" onClick={() => { setSearch(""); setProjects([]); setProspects([]); setSearched(false); }}>Reset</Button>
-        <Button onClick={() => exportCSV(projects, projectCols, "projects.csv")} className="bg-green-600 hover:bg-green-700 text-white">Export Projects CSV</Button>
-        <Button onClick={() => exportCSV(prospects, prospectCols, "prospects.csv")} className="bg-green-600 hover:bg-green-700 text-white">Export Prospects CSV</Button>
-        <Button onClick={() => exportPDF(projects, projectCols, "projects.pdf")} className="bg-red-600 hover:bg-red-700 text-white">Export Projects PDF</Button>
-        <Button onClick={() => exportPDF(prospects, prospectCols, "prospects.pdf")} className="bg-red-600 hover:bg-red-700 text-white">Export Prospects PDF</Button>
+        <Button onClick={() => exportCSV(projects, "projects.csv")} className="bg-green-600 hover:bg-green-700 text-white">Export Projects CSV</Button>
+        <Button onClick={() => exportCSV(prospects, "prospects.csv")} className="bg-green-600 hover:bg-green-700 text-white">Export Prospects CSV</Button>
+        <Button onClick={() => exportPDF(projects, "projects.pdf")} className="bg-red-600 hover:bg-red-700 text-white">Export Projects PDF</Button>
+        <Button onClick={() => exportPDF(prospects, "prospects.pdf")} className="bg-red-600 hover:bg-red-700 text-white">Export Prospects PDF</Button>
       </div>
 
       {/* Projects Table */}
@@ -119,17 +126,17 @@ export default function SearchCombined() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  {projectCols.map(c => <TableHead key={c}>{c.replaceAll("_", " ").replace(/\b\w/g, s => s.toUpperCase())}</TableHead>)}
+                  {projects[0] ? Object.keys(projects[0]).map(c => <TableHead key={c}>{c.replaceAll("_", " ").replace(/\b\w/g, s => s.toUpperCase())}</TableHead>) : <TableHead>Columns</TableHead>}
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {!searched && <TableRow><TableCell colSpan={projectCols.length + 1} className="text-center py-6">Enter a term and click Search</TableCell></TableRow>}
-                {searched && loading && <TableRow><TableCell colSpan={projectCols.length + 1} className="text-center py-6">Searching…</TableCell></TableRow>}
-                {searched && !loading && projects.length === 0 && <TableRow><TableCell colSpan={projectCols.length + 1} className="text-center py-6">No projects found</TableCell></TableRow>}
+                {!searched && <TableRow><TableCell colSpan={projects[0] ? Object.keys(projects[0]).length + 1 : 1} className="text-center py-6">Enter a term and click Search</TableCell></TableRow>}
+                {searched && loading && <TableRow><TableCell colSpan={projects[0] ? Object.keys(projects[0]).length + 1 : 1} className="text-center py-6">Searching…</TableCell></TableRow>}
+                {searched && !loading && projects.length === 0 && <TableRow><TableCell colSpan={projects[0] ? Object.keys(projects[0]).length + 1 : 1} className="text-center py-6">No projects found</TableCell></TableRow>}
                 {projects.map(p => (
                   <TableRow key={p.id} className="border-t">
-                    {projectCols.map(c => <TableCell key={c}>{String(p[c] ?? "-")}</TableCell>)}
+                    {Object.keys(p).map(c => <TableCell key={c}>{String(p[c] ?? "-")}</TableCell>)}
                     <TableCell className="flex gap-2">
                       <Button size="sm" className="bg-gray-700 hover:bg-gray-800 text-white" onClick={() => setOpenProjectId(p.id)}>Quick View</Button>
                       <Link href={`/projects/${p.id}/edit`} className="px-3 py-1 rounded-md bg-yellow-500 hover:bg-yellow-600 text-white text-sm">Edit</Link>
@@ -150,17 +157,17 @@ export default function SearchCombined() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  {prospectCols.map(c => <TableHead key={c}>{c.replaceAll("_", " ").replace(/\b\w/g, s => s.toUpperCase())}</TableHead>)}
+                  {prospects[0] ? Object.keys(prospects[0]).map(c => <TableHead key={c}>{c.replaceAll("_", " ").replace(/\b\w/g, s => s.toUpperCase())}</TableHead>) : <TableHead>Columns</TableHead>}
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {!searched && <TableRow><TableCell colSpan={prospectCols.length + 1} className="text-center py-6">Enter a term and click Search</TableCell></TableRow>}
-                {searched && loading && <TableRow><TableCell colSpan={prospectCols.length + 1} className="text-center py-6">Searching…</TableCell></TableRow>}
-                {searched && !loading && prospects.length === 0 && <TableRow><TableCell colSpan={prospectCols.length + 1} className="text-center py-6">No prospects found</TableCell></TableRow>}
+                {!searched && <TableRow><TableCell colSpan={prospects[0] ? Object.keys(prospects[0]).length + 1 : 1} className="text-center py-6">Enter a term and click Search</TableCell></TableRow>}
+                {searched && loading && <TableRow><TableCell colSpan={prospects[0] ? Object.keys(prospects[0]).length + 1 : 1} className="text-center py-6">Searching…</TableCell></TableRow>}
+                {searched && !loading && prospects.length === 0 && <TableRow><TableCell colSpan={prospects[0] ? Object.keys(prospects[0]).length + 1 : 1} className="text-center py-6">No prospects found</TableCell></TableRow>}
                 {prospects.map(p => (
                   <TableRow key={p.id} className="border-t">
-                    {prospectCols.map(c => <TableCell key={c}>{String(p[c] ?? "-")}</TableCell>)}
+                    {Object.keys(p).map(c => <TableCell key={c}>{String(p[c] ?? "-")}</TableCell>)}
                     <TableCell className="flex gap-2">
                       <Link href={`/projects/new?fromProspect=${p.id}`} className="px-3 py-1 rounded-md bg-green-600 hover:bg-green-700 text-white text-sm">Convert</Link>
                     </TableCell>
