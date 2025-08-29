@@ -21,7 +21,6 @@ const prospectCols = ["id","prospect","ns_sales_rep","industry","stage","status"
 export default function SearchCombined() {
   const supabase = createClientComponentClient();
 
-  // Auth check
   useEffect(()=>{
     (async()=>{
       const { data: { user } } = await supabase.auth.getUser();
@@ -33,19 +32,14 @@ export default function SearchCombined() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
   const [openProjectId, setOpenProjectId] = useState<number|null>(null);
-
-  // Debounced search
-  useEffect(()=>{
-    const handler = setTimeout(() => { loadSearch(); }, 300);
-    return () => clearTimeout(handler);
-  }, [search]);
 
   async function loadSearch() {
     setLoading(true);
+    setSearched(true);
     const terms = search.split(",").map(t=>t.trim()).filter(Boolean);
 
-    // Projects query
     let pq = supabase.from("projects").select("*").order("id",{ascending:false});
     if (terms.length) {
       pq = pq.or(
@@ -54,7 +48,6 @@ export default function SearchCombined() {
     }
     const { data: p1 } = await pq;
 
-    // Prospects query
     let rq = supabase.from("prospects").select("*").order("id",{ascending:false});
     if (terms.length) {
       rq = rq.or(
@@ -99,19 +92,19 @@ export default function SearchCombined() {
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Search Projects & Prospects</h1>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Input
           value={search}
           onChange={e=>setSearch(e.target.value)}
           placeholder="Type keywords, comma separated"
           className="w-96"
         />
-        <Button onClick={loadSearch}>Search</Button>
-        <Button variant="secondary" onClick={()=>{setSearch(""); setProjects([]); setProspects([]);}}>Reset</Button>
-        <Button onClick={()=>exportCSV(projects,projectCols,"projects.csv")}>Export Projects CSV</Button>
-        <Button onClick={()=>exportCSV(prospects,prospectCols,"prospects.csv")}>Export Prospects CSV</Button>
-        <Button variant="destructive" onClick={()=>exportPDF(projects,projectCols,"projects.pdf")}>Export Projects PDF</Button>
-        <Button variant="destructive" onClick={()=>exportPDF(prospects,prospectCols,"prospects.pdf")}>Export Prospects PDF</Button>
+        <Button onClick={loadSearch} className="bg-blue-600 hover:bg-blue-700 text-white">Search</Button>
+        <Button variant="outline" onClick={()=>{setSearch(""); setProjects([]); setProspects([]); setSearched(false);}}>Reset</Button>
+        <Button onClick={()=>exportCSV(projects,projectCols,"projects.csv")} className="bg-green-600 hover:bg-green-700 text-white">Export Projects CSV</Button>
+        <Button onClick={()=>exportCSV(prospects,prospectCols,"prospects.csv")} className="bg-green-600 hover:bg-green-700 text-white">Export Prospects CSV</Button>
+        <Button onClick={()=>exportPDF(projects,projectCols,"projects.pdf")} className="bg-red-600 hover:bg-red-700 text-white">Export Projects PDF</Button>
+        <Button onClick={()=>exportPDF(prospects,prospectCols,"prospects.pdf")} className="bg-red-600 hover:bg-red-700 text-white">Export Prospects PDF</Button>
       </div>
 
       {/* Projects Table */}
@@ -126,15 +119,16 @@ export default function SearchCombined() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading && <TableRow><TableCell colSpan={projectCols.length+1} className="text-center py-6">Searching…</TableCell></TableRow>}
-                {!loading && projects.length===0 && <TableRow><TableCell colSpan={projectCols.length+1} className="text-center py-6">No projects</TableCell></TableRow>}
+                {!searched && <TableRow><TableCell colSpan={projectCols.length+1} className="text-center py-6">Enter a term and click Search</TableCell></TableRow>}
+                {searched && loading && <TableRow><TableCell colSpan={projectCols.length+1} className="text-center py-6">Searching…</TableCell></TableRow>}
+                {searched && !loading && projects.length===0 && <TableRow><TableCell colSpan={projectCols.length+1} className="text-center py-6">No projects found</TableCell></TableRow>}
                 {projects.map(p=>(
                   <TableRow key={p.id} className="border-t">
                     {projectCols.map(c=><TableCell key={c}>{String(p[c]??"-")}</TableCell>)}
                     <TableCell className="flex gap-2">
-                      <Button size="sm" onClick={()=>setOpenProjectId(p.id)}>🔍 Quick View</Button>
-                      <Link href={`/projects/${p.id}/edit`} className="px-2 py-1 rounded-md text-sm bg-yellow-500 text-white">✏️ Edit</Link>
-                      <Link href={`/projects/${p.id}`} className="px-2 py-1 rounded-md text-sm bg-gray-800 text-white">Open</Link>
+                      <Button size="sm" className="bg-gray-700 hover:bg-gray-800 text-white" onClick={()=>setOpenProjectId(p.id)}>Quick View</Button>
+                      <Link href={`/projects/${p.id}/edit`} className="px-3 py-1 rounded-md bg-yellow-500 hover:bg-yellow-600 text-white text-sm">Edit</Link>
+                      <Link href={`/projects/${p.id}`} className="px-3 py-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm">Open</Link>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -156,13 +150,14 @@ export default function SearchCombined() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading && <TableRow><TableCell colSpan={prospectCols.length+1} className="text-center py-6">Searching…</TableCell></TableRow>}
-                {!loading && prospects.length===0 && <TableRow><TableCell colSpan={prospectCols.length+1} className="text-center py-6">No prospects</TableCell></TableRow>}
+                {!searched && <TableRow><TableCell colSpan={prospectCols.length+1} className="text-center py-6">Enter a term and click Search</TableCell></TableRow>}
+                {searched && loading && <TableRow><TableCell colSpan={prospectCols.length+1} className="text-center py-6">Searching…</TableCell></TableRow>}
+                {searched && !loading && prospects.length===0 && <TableRow><TableCell colSpan={prospectCols.length+1} className="text-center py-6">No prospects found</TableCell></TableRow>}
                 {prospects.map(p=>(
                   <TableRow key={p.id} className="border-t">
                     {prospectCols.map(c=><TableCell key={c}>{String(p[c]??"-")}</TableCell>)}
-                    <TableCell>
-                      <Link href={`/projects/new?fromProspect=${p.id}`} className="text-green-700">Convert</Link>
+                    <TableCell className="flex gap-2">
+                      <Link href={`/projects/new?fromProspect=${p.id}`} className="px-3 py-1 rounded-md bg-green-600 hover:bg-green-700 text-white text-sm">Convert</Link>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -172,12 +167,12 @@ export default function SearchCombined() {
         </CardContent>
       </Card>
 
-      {/* Quick View Dialog for Projects */}
+      {/* Quick View Dialog */}
       <Dialog open={openProjectId!==null} onOpenChange={o=>{if(!o)setOpenProjectId(null);}}>
         <DialogContent className="flex flex-col max-h-[80vh] w-full sm:w-[600px]">
-          <DialogHeader>
+          <DialogHeader className="flex justify-between items-center">
             <div className="font-semibold">Project #{selectedProject?.id} — {selectedProject?.customer_name || "Untitled"}</div>
-            <button onClick={()=>setOpenProjectId(null)} className="px-2 py-1">✖</button>
+            <button onClick={()=>setOpenProjectId(null)} className="text-gray-500 hover:text-gray-700">✖</button>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto space-y-2 text-sm p-2">
             {selectedProject && Object.keys(selectedProject).sort().map(k=>(
@@ -188,8 +183,8 @@ export default function SearchCombined() {
             ))}
           </div>
           <DialogFooter className="flex gap-2">
-            {selectedProject && <Link href={`/projects/${selectedProject.id}`} className="px-3 py-2 rounded-xl text-sm bg-gray-900 text-white">Open Full Page</Link>}
-            <Button variant="secondary" onClick={()=>setOpenProjectId(null)}>Close</Button>
+            {selectedProject && <Link href={`/projects/${selectedProject.id}`} className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white">Open Full Page</Link>}
+            <Button variant="outline" onClick={()=>setOpenProjectId(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
