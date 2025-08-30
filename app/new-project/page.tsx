@@ -1,9 +1,7 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Button } from "@/components/ui/button";
 
@@ -55,49 +53,17 @@ const FIELDS: Field[] = [
 export default function NewProject() {
   const supabase = createClientComponentClient();
   const router = useRouter();
-  const params = useSearchParams();
 
   const [form, setForm] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fromProspect, setFromProspect] = useState<string | null>(null);
 
-  // Check authentication
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) router.push("/login");
+      if (!user) window.location.href = "/login";
     })();
-  }, [supabase, router]);
-
-  // Store fromProspect param safely
-  useEffect(() => {
-    const prospectId = params.get("fromProspect");
-    if (prospectId) setFromProspect(prospectId);
-  }, [params]);
-
-  // Prefill from prospect
-  useEffect(() => {
-    if (!fromProspect) return;
-
-    (async () => {
-      const { data, error } = await supabase
-        .from("prospects")
-        .select("*")
-        .eq("id", Number(fromProspect))
-        .single();
-
-      if (!error && data) {
-        setForm(prev => ({
-          ...prev,
-          customer_name: data.prospect ?? "",
-          by_industry: data.industry ?? "",
-          submitter_name: data.zenardy_sc ?? "",
-          partner_company_name: data.ns_sales_rep ?? "",
-        }));
-      }
-    })();
-  }, [fromProspect, supabase]);
+  }, [supabase]);
 
   const handleChange = (key: string, value: any) =>
     setForm(prev => ({ ...prev, [key]: value }));
