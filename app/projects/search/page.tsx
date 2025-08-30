@@ -145,7 +145,7 @@ export default function SearchTogglePage() {
                       </Link>
                       {activeTab === "prospects" && (
                         <Link
-                          href={`/projects/new?prospectId=${p.id}`} // Pass prefill param
+                          href={`/projects/new?prospectId=${p.id}`}
                           className="flex items-center gap-1 px-2 py-1 rounded-md text-sm bg-green-600 text-white hover:bg-green-700"
                         >
                           Convert
