@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 
 const FIELDS = [
   { key: "prospect", label: "Prospect" },
+  { key: "prospect_type", label: "Prospect Type" }, // added field
   { key: "ns_sales_rep", label: "NS Sales Rep" },
   { key: "zenardy_sc", label: "Zenardy SC" },
   { key: "industry", label: "Industry" },
@@ -66,7 +67,7 @@ export default function EditProspect() {
           <label key={f.key} className="flex flex-col gap-1">
             <span className="text-sm font-medium">{f.label}</span>
             <input
-              className="border rounded-xl px-3 py-2"
+              className="border rounded-xl px-3 py-2 text-gray-900 bg-white placeholder-gray-400"
               value={form[f.key] ?? ""}
               onChange={e => handleChange(f.key, e.target.value)}
               placeholder={f.label}
