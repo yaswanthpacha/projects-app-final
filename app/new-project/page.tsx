@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Button } from "@/components/ui/button";
 
@@ -53,6 +53,7 @@ const FIELDS: Field[] = [
 export default function NewProject() {
   const supabase = createClientComponentClient();
   const router = useRouter();
+  const params = useSearchParams();
 
   const [form, setForm] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
@@ -61,9 +62,33 @@ export default function NewProject() {
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) window.location.href = "/login";
+      if (!user) router.push("/login");
     })();
-  }, [supabase]);
+  }, [supabase, router]);
+
+  // Prefill from prospect if provided
+  useEffect(() => {
+    const fromProspect = params.get("fromProspect");
+    (async () => {
+      if (fromProspect) {
+        const { data, error } = await supabase
+          .from("prospects")
+          .select("*")
+          .eq("id", Number(fromProspect))
+          .single();
+        if (!error && data) {
+          setForm(prev => ({
+            ...prev,
+            customer_name: data.prospect ?? "",
+            by_industry: data.industry ?? "",
+            submitter_name: data.zenardy_sc ?? "",
+            partner_company_name: data.ns_sales_rep ?? "",
+            // keep rest empty for user to fill
+          }));
+        }
+      }
+    })();
+  }, [params, supabase]);
 
   const handleChange = (key: string, value: any) =>
     setForm(prev => ({ ...prev, [key]: value }));
