@@ -12,14 +12,16 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { Dialog, DialogContent, DialogFooter, DialogHeader } from "@/components/ui/dialog";
 
-type Project = { [key: string]: any };
-const keyCols = ["id","customer_name","partner_company_name","by_industry","by_product","by_competitor"];
+type RecordType = { [key: string]: any };
 
-function exportCSV(rows: any[], filename = "projects_filtered.csv") {
+const projectCols = ["id","customer_name","partner_company_name","by_industry","by_product","by_competitor"];
+const prospectCols = ["id","name","company","industry","email","phone"];
+
+function exportCSV(rows: RecordType[], filename = "filtered.csv", cols: string[]) {
   if (!rows.length) return;
   const worksheet = XLSX.utils.json_to_sheet(rows);
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Projects");
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
   const wbout = XLSX.write(workbook, { bookType: "csv", type: "array" });
   const blob = new Blob([wbout], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -28,50 +30,61 @@ function exportCSV(rows: any[], filename = "projects_filtered.csv") {
   URL.revokeObjectURL(url);
 }
 
-function exportPDF(rows: any[], filename = "projects_filtered.pdf") {
+function exportPDF(rows: RecordType[], filename = "filtered.pdf", cols: string[]) {
   if (!rows.length) return;
   const doc = new jsPDF();
-  const headers = keyCols;
-  const body = rows.map(r => headers.map(h => String(r[h] ?? "")));
-  (doc as any).autoTable({ head: [headers], body, styles: { fontSize: 8 } });
+  const body = rows.map(r => cols.map(c => String(r[c] ?? "")));
+  (doc as any).autoTable({ head: [cols], body, styles: { fontSize: 8 } });
   doc.save(filename);
 }
 
-export default function SearchProjects(){
+export default function SearchTogglePage() {
   const supabase = createClientComponentClient();
-  useEffect(()=>{
-    (async()=>{
+
+  useEffect(() => {
+    (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) window.location.href = "/login";
     })();
-  },[]);
+  }, []);
 
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [activeTab, setActiveTab] = useState<"projects" | "prospects">("projects");
+  const [projects, setProjects] = useState<RecordType[]>([]);
+  const [prospects, setProspects] = useState<RecordType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string|null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [query, setQuery] = useState("");
-  const [openId, setOpenId] = useState<number|null>(null);
+  const [openId, setOpenId] = useState<number | null>(null);
 
-  useEffect(()=>{
-    (async()=>{
+  useEffect(() => {
+    (async () => {
       setLoading(true);
-      const { data, error } = await supabase.from("projects").select("*").order("id",{ascending:false});
-      if (error) setError(error.message);
-      setProjects(data || []);
+      if (activeTab === "projects") {
+        const { data, error } = await supabase.from("projects").select("*").order("id", { ascending: false });
+        if (error) setError(error.message);
+        setProjects(data || []);
+      } else {
+        const { data, error } = await supabase.from("prospects").select("*").order("id", { ascending: false });
+        if (error) setError(error.message);
+        setProspects(data || []);
+      }
       setLoading(false);
     })();
-  },[]);
+  }, [activeTab]);
 
-  const searchableKeys = useMemo(()=>{
-    const sample = projects[0] || {};
+  const data = activeTab === "projects" ? projects : prospects;
+  const keyCols = activeTab === "projects" ? projectCols : prospectCols;
+
+  const searchableKeys = useMemo(() => {
+    const sample = data[0] || {};
     return Object.keys(sample).filter(k => typeof sample[k] !== "boolean");
-  },[projects]);
+  }, [data]);
 
-  const filtered = useMemo(()=>{
+  const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    return projects.filter(p =>
+    return data.filter(p =>
       searchableKeys.some(k => {
         const v = p[k];
         if (v === null || v === undefined) return false;
@@ -79,22 +92,26 @@ export default function SearchProjects(){
         return String(v).toLowerCase().includes(q);
       })
     );
-  },[projects, query, searchableKeys]);
+  }, [data, query, searchableKeys]);
 
-  const selected = useMemo(() => projects.find(p => p.id === openId) || null, [projects, openId]);
+  const selected = useMemo(() => data.find(p => p.id === openId) || null, [data, openId]);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Search Projects</h1>
+        <h1 className="text-xl font-semibold">Search {activeTab === "projects" ? "Projects" : "Prospects"}</h1>
+        <div className="flex gap-2">
+          <Button variant={activeTab === "projects" ? "default" : "outline"} onClick={() => { setActiveTab("projects"); setQuery(""); setInput(""); }}>Projects</Button>
+          <Button variant={activeTab === "prospects" ? "default" : "outline"} onClick={() => { setActiveTab("prospects"); setQuery(""); setInput(""); }}>Prospects</Button>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">
-        <Input value={input} onChange={(e)=>setInput(e.target.value)} placeholder="Search projects..." className="w-96" />
-        <Button onClick={()=>setQuery(input)}>Search</Button>
-        <Button variant="secondary" onClick={()=>{ setInput(""); setQuery(""); }}>Reset</Button>
-        <Button onClick={()=>exportCSV(filtered)}>Export CSV</Button>
-        <Button variant="destructive" onClick={()=>exportPDF(filtered)}>Export PDF</Button>
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder={`Search ${activeTab}...`} className="w-96" />
+        <Button onClick={() => setQuery(input)}>Search</Button>
+        <Button variant="secondary" onClick={() => { setInput(""); setQuery(""); }}>Reset</Button>
+        <Button onClick={() => exportCSV(filtered, `${activeTab}_filtered.csv`, keyCols)}>Export CSV</Button>
+        <Button variant="destructive" onClick={() => exportPDF(filtered, `${activeTab}_filtered.pdf`, keyCols)}>Export PDF</Button>
       </div>
 
       <Card className="dark:bg-gray-900">
@@ -103,40 +120,30 @@ export default function SearchProjects(){
             <Table>
               <TableHeader>
                 <TableRow>
-                  {keyCols.map(k => <TableHead key={k}>{k === "partner_company_name" ? "Partner" : k.replaceAll("_"," ").replace(/\b\w/g, s=>s.toUpperCase())}</TableHead>)}
+                  {keyCols.map(k => <TableHead key={k}>{k.replaceAll("_", " ").replace(/\b\w/g, s => s.toUpperCase())}</TableHead>)}
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {!query && <TableRow><TableCell colSpan={keyCols.length+1} className="text-center py-6">Enter a term and press Search</TableCell></TableRow>}
-                {query && filtered.length === 0 && <TableRow><TableCell colSpan={keyCols.length+1} className="text-center py-6">No results</TableCell></TableRow>}
+                {!query && <TableRow><TableCell colSpan={keyCols.length + 1} className="text-center py-6">Enter a term and press Search</TableCell></TableRow>}
+                {query && filtered.length === 0 && <TableRow><TableCell colSpan={keyCols.length + 1} className="text-center py-6">No results</TableCell></TableRow>}
                 {filtered.map(p => (
                   <TableRow key={p.id}>
                     {keyCols.map(k => <TableCell key={k}>{String(p[k] ?? "-")}</TableCell>)}
                     <TableCell className="flex gap-2">
-  <Button 
-    variant="outline" 
-    size="sm" 
-    className="flex items-center gap-1 px-2"
-    onClick={()=>setOpenId(p.id)}
-    title="Quick view"
-  >
-    🔍 Quick View
-  </Button>
-  <Link 
-    href={`/projects/${p.id}/edit`} 
-    className="flex items-center gap-1 px-2 py-1 rounded-md text-sm bg-yellow-500 text-white hover:bg-yellow-600"
-  >
-    ✏️ Edit
-  </Link>
-  <Link 
-    href={`/projects/${p.id}`} 
-    className="flex items-center gap-1 px-2 py-1 rounded-md text-sm bg-gray-800 text-white hover:bg-gray-900"
-  >
-    Open
-  </Link>
-</TableCell>
-
+                      <Link
+                        href={activeTab === "projects" ? `/projects/${p.id}/edit` : `/prospects/${p.id}/edit`}
+                        className="flex items-center gap-1 px-2 py-1 rounded-md text-sm bg-yellow-500 text-white hover:bg-yellow-600"
+                      >
+                        ✏️ Edit
+                      </Link>
+                      <Link
+                        href={activeTab === "projects" ? `/projects/${p.id}` : `/prospects/${p.id}`}
+                        className="flex items-center gap-1 px-2 py-1 rounded-md text-sm bg-gray-800 text-white hover:bg-gray-900"
+                      >
+                        Open
+                      </Link>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -145,15 +152,14 @@ export default function SearchProjects(){
         </CardContent>
       </Card>
 
-      {/* Scrollable Quick View Dialog */}
-      <Dialog open={openId !== null} onOpenChange={(o)=>{ if(!o) setOpenId(null); }}>
+      {/* Scrollable Detail Dialog */}
+      <Dialog open={openId !== null} onOpenChange={(o) => { if (!o) setOpenId(null); }}>
         <DialogContent className="flex flex-col max-h-[80vh] w-full sm:w-[600px]">
           <DialogHeader>
-            <div className="font-semibold">Project #{selected?.id} — {selected?.customer_name || "Untitled"}</div>
-            <button onClick={()=>setOpenId(null)} className="px-2 py-1">✖</button>
+            <div className="font-semibold">{activeTab === "projects" ? `Project #${selected?.id}` : `Prospect #${selected?.id}`} — {selected?.customer_name || selected?.name || "Untitled"}</div>
+            <button onClick={() => setOpenId(null)} className="px-2 py-1">✖</button>
           </DialogHeader>
 
-          {/* Scrollable body */}
           <div className="flex-1 overflow-y-auto space-y-2 text-sm p-2">
             {selected && Object.keys(selected).sort().map((key) => (
               <div key={key} className="grid grid-cols-3 gap-3 py-1 border-b">
@@ -164,8 +170,8 @@ export default function SearchProjects(){
           </div>
 
           <DialogFooter className="flex gap-2">
-            {selected && <Link href={`/projects/${selected.id}`} className="px-3 py-2 rounded-xl text-sm bg-gray-900 text-white">Open Full Page</Link>}
-            <Button variant="secondary" onClick={()=>setOpenId(null)}>Close</Button>
+            {selected && <Link href={activeTab === "projects" ? `/projects/${selected.id}` : `/prospects/${selected.id}`} className="px-3 py-2 rounded-xl text-sm bg-gray-900 text-white">Open Full Page</Link>}
+            <Button variant="secondary" onClick={() => setOpenId(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
