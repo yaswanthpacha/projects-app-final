@@ -15,6 +15,7 @@ const FIELDS = [
   { key: "close_date", label: "Close Date", type: "date" },
   { key: "stage", label: "Stage" },
   { key: "next_steps", label: "Next Steps" },
+  { key: "prospect_type", label: "Prospect Type" }, // added text input
 ];
 
 export default function NewProspect() {
@@ -45,7 +46,7 @@ export default function NewProspect() {
           <label key={f.key} className="flex flex-col gap-1">
             <span className="text-sm font-medium">{f.label}</span>
             <input
-              className="border rounded-xl px-3 py-2"
+              className="border rounded-xl px-3 py-2 text-gray-900 bg-white placeholder-gray-400"
               value={form[f.key] ?? ""}
               onChange={e => handleChange(f.key, e.target.value)}
               placeholder={f.label}
