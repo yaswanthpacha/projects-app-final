@@ -60,7 +60,9 @@ export default function NewProject() {
   const [form, setForm] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fromProspect, setFromProspect] = useState<string | null>(null);
 
+  // Check authentication
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -68,29 +70,34 @@ export default function NewProject() {
     })();
   }, [supabase, router]);
 
-  // Prefill from prospect if provided
+  // Store fromProspect param safely
   useEffect(() => {
-    const fromProspect = params.get("fromProspect");
+    const prospectId = params.get("fromProspect");
+    if (prospectId) setFromProspect(prospectId);
+  }, [params]);
+
+  // Prefill from prospect
+  useEffect(() => {
+    if (!fromProspect) return;
+
     (async () => {
-      if (fromProspect) {
-        const { data, error } = await supabase
-          .from("prospects")
-          .select("*")
-          .eq("id", Number(fromProspect))
-          .single();
-        if (!error && data) {
-          setForm(prev => ({
-            ...prev,
-            customer_name: data.prospect ?? "",
-            by_industry: data.industry ?? "",
-            submitter_name: data.zenardy_sc ?? "",
-            partner_company_name: data.ns_sales_rep ?? "",
-            // keep rest empty for user to fill
-          }));
-        }
+      const { data, error } = await supabase
+        .from("prospects")
+        .select("*")
+        .eq("id", Number(fromProspect))
+        .single();
+
+      if (!error && data) {
+        setForm(prev => ({
+          ...prev,
+          customer_name: data.prospect ?? "",
+          by_industry: data.industry ?? "",
+          submitter_name: data.zenardy_sc ?? "",
+          partner_company_name: data.ns_sales_rep ?? "",
+        }));
       }
     })();
-  }, [params, supabase]);
+  }, [fromProspect, supabase]);
 
   const handleChange = (key: string, value: any) =>
     setForm(prev => ({ ...prev, [key]: value }));
