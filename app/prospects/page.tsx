@@ -19,7 +19,7 @@ type Prospect = {
   next_steps: string | null;
   status: string | null;
   project_id: number | null;
-  prospect_type: string | null; // new field
+  prospect_type: string | null;
   created_at?: string | null;
   updated_at?: string | null;
 };
@@ -36,7 +36,7 @@ const keyCols: (keyof Prospect)[] = [
   "stage",
   "next_steps",
   "status",
-  "prospect_type", // added column
+  "prospect_type",
 ];
 
 export default function ProspectsList() {
@@ -65,7 +65,8 @@ export default function ProspectsList() {
         .order("id", { ascending: false });
 
       if (error) setError(error.message);
-      setProspects((data || []) as Prospect[]);
+      // Hide converted prospects
+      setProspects((data || []).filter((p: Prospect) => p.status !== "converted"));
       setLoading(false);
     })();
   }, [supabase]);
@@ -95,10 +96,7 @@ export default function ProspectsList() {
           <thead className="bg-gray-800 text-white sticky top-0 z-10">
             <tr>
               {keyCols.map((k) => (
-                <th
-                  key={String(k)}
-                  className="text-left px-3 py-2 capitalize"
-                >
+                <th key={String(k)} className="text-left px-3 py-2 capitalize">
                   {String(k).replaceAll("_", " ")}
                 </th>
               ))}
@@ -108,20 +106,14 @@ export default function ProspectsList() {
           <tbody>
             {loading && (
               <tr>
-                <td
-                  className="text-center py-6"
-                  colSpan={keyCols.length + 1}
-                >
+                <td className="text-center py-6" colSpan={keyCols.length + 1}>
                   Loading…
                 </td>
               </tr>
             )}
             {!loading && prospects.length === 0 && (
               <tr>
-                <td
-                  className="text-center py-6"
-                  colSpan={keyCols.length + 1}
-                >
+                <td className="text-center py-6" colSpan={keyCols.length + 1}>
                   No data
                 </td>
               </tr>
@@ -146,14 +138,9 @@ export default function ProspectsList() {
                       </Link>
                       <Button
                         className="bg-green-600 hover:bg-green-700"
-                        onClick={() => {
-                          if (p.status !== "converted") {
-                            window.location.href = `/projects/new?fromProspect=${p.id}`;
-                          }
-                        }}
-                        disabled={p.status === "converted"}
+                        onClick={() => router.push(`/projects/convert/${p.id}`)}
                       >
-                        {p.status === "converted" ? "Converted" : "Convert"}
+                        Convert
                       </Button>
                     </div>
                   </td>
