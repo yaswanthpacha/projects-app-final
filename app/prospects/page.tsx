@@ -19,6 +19,7 @@ type Prospect = {
   next_steps: string | null;
   status: string | null;
   project_id: number | null;
+  prospect_type: string | null; // new field
   created_at?: string | null;
   updated_at?: string | null;
 };
@@ -35,6 +36,7 @@ const keyCols: (keyof Prospect)[] = [
   "stage",
   "next_steps",
   "status",
+  "prospect_type", // added column
 ];
 
 export default function ProspectsList() {
@@ -160,6 +162,8 @@ export default function ProspectsList() {
           </tbody>
         </table>
       </div>
+
+      {error && <p className="text-red-600">{error}</p>}
     </div>
   );
 }
