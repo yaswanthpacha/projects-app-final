@@ -1,56 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getKPIs } from "@/utils/supabaseQueries";
+import { motion } from "framer-motion";
 import KPIsChart from "@/components/charts/KPIsChart";
 
 export default function DashboardPage() {
-  const [kpis, setKpis] = useState<any>(null);
-
-  useEffect(() => {
-    getKPIs().then(setKpis);
-  }, []);
-
   return (
-    <div className="p-6 space-y-6 bg-black min-h-screen text-white">
-      <h1 className="text-2xl font-bold">📊 Dashboard</h1>
+    <div className="min-h-screen bg-black text-white p-6">
+      <motion.h1
+        className="text-3xl font-bold flex items-center mb-8"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        📊 Dashboard
+      </motion.h1>
 
-      {/* KPI Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gray-900 shadow-md rounded-2xl p-6 text-center">
-          <p className="text-gray-400">Prospects</p>
-          <p className="text-3xl font-bold">{kpis?.totalProspects ?? 0}</p>
-        </div>
-        <div className="bg-gray-900 shadow-md rounded-2xl p-6 text-center">
-          <p className="text-gray-400">Conversion Rate</p>
-          <p className="text-3xl font-bold">
-            {kpis?.conversionRate ?? 0}%
-          </p>
-        </div>
-        <div className="bg-gray-900 shadow-md rounded-2xl p-6 text-center">
-          <p className="text-gray-400">Projects On Time</p>
-          <p className="text-3xl font-bold">
-            {kpis?.onTimeRate ?? 0}%
-          </p>
-        </div>
-      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <KPIsChart />
+        </motion.div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gray-900 shadow-md rounded-2xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Prospects by Type</h2>
-          <KPIsChart type="prospectsByType" />
-        </div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <KPIsChart />
+        </motion.div>
 
-        <div className="bg-gray-900 shadow-md rounded-2xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Prospect Conversion</h2>
-          <KPIsChart type="conversionRate" />
-        </div>
-
-        <div className="bg-gray-900 shadow-md rounded-2xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Projects On Time</h2>
-          <KPIsChart type="onTimeProjects" />
-        </div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.7 }}
+        >
+          <KPIsChart />
+        </motion.div>
       </div>
     </div>
   );
