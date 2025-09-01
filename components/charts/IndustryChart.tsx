@@ -1,27 +1,38 @@
 "use client";
 
-import { ResponsiveContainer, PieChart, Pie, Tooltip, Legend, Cell } from "recharts";
-
-const data = [
-  { name: "Industry A", value: 4 },
-  { name: "Industry B", value: 3 },
-  { name: "Industry C", value: 2 },
-];
-
-const COLORS = ["#4F46E5", "#10B981", "#F59E0B"];
+import { useEffect, useState } from "react";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 export default function IndustryChart() {
+  const [data, setData] = useState<{ name: string; count: number }[]>([]);
+  const supabase = createClientComponentClient();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: projects } = await supabase.from("projects").select("by_industry");
+      const counts: Record<string, number> = {};
+      projects?.forEach((p) => {
+        if (p.by_industry) {
+          counts[p.by_industry] = (counts[p.by_industry] || 0) + 1;
+        }
+      });
+      setData(Object.entries(counts).map(([name, count]) => ({ name, count })));
+    };
+    fetchData();
+  }, [supabase]);
+
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <PieChart>
-        <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100}>
-          {data.map((_, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip />
-        <Legend />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="h-72">
+      <ResponsiveContainer>
+        <BarChart data={data}>
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Bar dataKey="count" fill="#8884d8" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
