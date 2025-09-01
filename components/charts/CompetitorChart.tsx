@@ -1,23 +1,38 @@
 "use client";
 
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend } from "recharts";
-
-const data = [
-  { name: "Competitor A", value: 2 },
-  { name: "Competitor B", value: 4 },
-  { name: "Competitor C", value: 3 },
-];
+import { useEffect, useState } from "react";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 export default function CompetitorChart() {
+  const [data, setData] = useState<{ name: string; count: number }[]>([]);
+  const supabase = createClientComponentClient();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: projects } = await supabase.from("projects").select("by_competitor");
+      const counts: Record<string, number> = {};
+      projects?.forEach((p) => {
+        if (p.by_competitor) {
+          counts[p.by_competitor] = (counts[p.by_competitor] || 0) + 1;
+        }
+      });
+      setData(Object.entries(counts).map(([name, count]) => ({ name, count })));
+    };
+    fetchData();
+  }, [supabase]);
+
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={data}>
-        <XAxis dataKey="name" />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        <Line type="monotone" dataKey="value" stroke="#EF4444" strokeWidth={2} />
-      </LineChart>
-    </ResponsiveContainer>
+    <div className="h-72">
+      <ResponsiveContainer>
+        <BarChart data={data}>
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Bar dataKey="count" fill="#ffc658" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
