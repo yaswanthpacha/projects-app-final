@@ -10,7 +10,11 @@ type KPIsChartProps = {
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#9932CC", "#FF69B4"];
 
-export default function KPIsChart({ prospectsByType, conversionRate, onTimeProjects }: KPIsChartProps) {
+export default function KPIsChart({
+  prospectsByType,
+  conversionRate,
+  onTimeProjects,
+}: KPIsChartProps) {
   const prospectsData = Object.entries(prospectsByType).map(([name, value]) => ({
     name,
     value,
@@ -43,7 +47,7 @@ export default function KPIsChart({ prospectsByType, conversionRate, onTimeProje
         </ResponsiveContainer>
       </div>
 
-      {/* Conversion % */}
+      {/* Conversion Rate */}
       <div className="h-64">
         <ResponsiveContainer>
           <PieChart>
@@ -58,7 +62,7 @@ export default function KPIsChart({ prospectsByType, conversionRate, onTimeProje
         </ResponsiveContainer>
       </div>
 
-      {/* On-time Projects % */}
+      {/* On-time Projects */}
       <div className="h-64">
         <ResponsiveContainer>
           <PieChart>
