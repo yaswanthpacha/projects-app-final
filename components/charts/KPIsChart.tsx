@@ -1,46 +1,57 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import { getKPIsChartData } from "@/utils/supabaseQueries";
+import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import { motion } from "framer-motion";
+import { getKPIData } from "@/lib/supabaseQueries";
 
-const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#a855f7"];
+const COLORS = ["#3b82f6", "#10b981"]; // blue, green
 
-export default function KPIsChart({ type }: { type: string }) {
-  const [data, setData] = useState<any[]>([]);
+export default function KPIsChart() {
+  const [data, setData] = useState<{ name: string; value: number }[]>([]);
 
   useEffect(() => {
-    getKPIsChartData(type).then(setData);
-  }, [type]);
+    async function fetchData() {
+      const projects = await getKPIData();
 
-  if (!data || data.length === 0) {
-    return <p className="text-gray-500 text-sm">No data available</p>;
-  }
+      // Example calculation (adjust based on your DB fields)
+      const converted = projects.filter((p: any) => p.status === "converted").length;
+      const notConverted = projects.length - converted;
+
+      setData([
+        { name: "Converted", value: converted },
+        { name: "Not Converted", value: notConverted },
+      ]);
+    }
+
+    fetchData();
+  }, []);
 
   return (
-    <div className="w-full h-64">
-      <ResponsiveContainer>
-        <PieChart>
-          <Pie
-            data={data}
-            dataKey="value"
-            nameKey="label"
-            outerRadius={90}
-            label
-          >
-            {data.map((_, index) => (
-              <Cell key={index} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "#111",
-              border: "1px solid #333",
-              color: "#fff",
-            }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
-    </div>
+    <motion.div
+      className="flex justify-center items-center p-4 bg-neutral-900 rounded-2xl shadow-lg"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8 }}
+    >
+      <PieChart width={300} height={300}>
+        <Pie
+          data={data}
+          cx="50%"
+          cy="50%"
+          outerRadius={100}
+          dataKey="value"
+          label
+          animationBegin={200}
+          animationDuration={1200}
+        >
+          {data.map((_, index) => (
+            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Pie>
+        <Tooltip />
+        <Legend />
+      </PieChart>
+    </motion.div>
   );
 }
