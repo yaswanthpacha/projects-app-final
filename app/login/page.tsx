@@ -29,12 +29,18 @@ export default function AuthPage() {
   }, [supabase, router]);
 
   const signInWithGoogle = async () => {
+    if (!captchaToken) {
+      setError("Captcha verification required.");
+      return;
+    }
+
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
+    setCaptchaToken(null);
   };
 
   const handleSignup = async () => {
@@ -44,7 +50,6 @@ export default function AuthPage() {
       return;
     }
 
-    // Create auth user
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -56,7 +61,6 @@ export default function AuthPage() {
     }
 
     if (data.user) {
-      // Store username in user_profiles table
       const { error: profileError } = await supabase
         .from("user_profiles")
         .insert({
@@ -83,7 +87,6 @@ export default function AuthPage() {
     try {
       let userEmail = email;
 
-      // If user entered a username, resolve to email
       if (username && !email) {
         const { data, error } = await supabase
           .from("user_profiles")
@@ -96,7 +99,6 @@ export default function AuthPage() {
           return;
         }
 
-        // Lookup user’s email from auth.users
         const { data: userData, error: userError } = await supabase.auth.admin.getUserById(
           data.id
         );
@@ -190,17 +192,20 @@ export default function AuthPage() {
         />
 
         {/* hCaptcha */}
-        <HCaptcha
-          sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY!}
-          onVerify={(token) => setCaptchaToken(token)}
-          onExpire={() => setCaptchaToken(null)}
-          className="mb-4"
-        />
+        <div className="mb-4">
+          <HCaptcha
+            sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY!}
+            onVerify={(token) => setCaptchaToken(token)}
+            onExpire={() => setCaptchaToken(null)}
+          />
+        </div>
 
         {/* Submit */}
         <button
           onClick={handleAuth}
-          className="w-full mb-4 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition"
+          disabled={!captchaToken}
+          className={`w-full mb-4 font-medium py-2 px-4 rounded-lg transition 
+            ${captchaToken ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-gray-400 text-gray-200 cursor-not-allowed"}`}
         >
           {isLogin ? "Login" : "Sign Up"}
         </button>
@@ -208,7 +213,9 @@ export default function AuthPage() {
         {/* Google OAuth */}
         <button
           onClick={signInWithGoogle}
-          className="w-full flex items-center justify-center gap-3 bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition mb-4"
+          disabled={!captchaToken}
+          className={`w-full flex items-center justify-center gap-3 font-medium py-2 px-4 rounded-lg transition mb-4
+            ${captchaToken ? "bg-red-500 hover:bg-red-600 text-white" : "bg-gray-400 text-gray-200 cursor-not-allowed"}`}
         >
           <img
             src="https://www.svgrepo.com/show/355037/google.svg"
