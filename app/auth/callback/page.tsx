@@ -12,20 +12,23 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const handleAuth = async () => {
-      const { data, error } = await supabase.auth.getSession();
+      // 👇 Exchange the OAuth code in the URL for a Supabase session
+      const { data, error } = await supabase.auth.exchangeCodeForSession(
+        window.location.href
+      );
 
       if (error) {
-        console.error("Error during callback:", error.message);
+        console.error("OAuth error:", error.message);
         router.push("/login");
         return;
       }
 
-      if (data.session) {
+      if (data?.session) {
+        // Success: user is logged in
         router.push("/dashboard");
       } else {
-        // if session not yet set, try refreshing
-        await supabase.auth.refreshSession();
-        router.push("/dashboard");
+        // Fallback: go to login if session not created
+        router.push("/login");
       }
     };
 
