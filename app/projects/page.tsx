@@ -65,7 +65,8 @@ export default function ProjectsList() {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 bg-black min-h-screen text-white p-4">
+      {/* Page header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Projects</h1>
         <Link
@@ -75,14 +76,16 @@ export default function ProjectsList() {
           Search Projects
         </Link>
       </div>
-      <Card className="dark:bg-gray-900">
+
+      {/* Table */}
+      <Card className="bg-gray-900 border border-gray-700 text-white">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   {keyCols.map((k) => (
-                    <TableHead key={k}>
+                    <TableHead key={k} className="text-white">
                       {k === "partner_company_name"
                         ? "Partner"
                         : k
@@ -90,7 +93,7 @@ export default function ProjectsList() {
                             .replace(/\b\w/g, (s) => s.toUpperCase())}
                     </TableHead>
                   ))}
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="text-white">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -98,7 +101,7 @@ export default function ProjectsList() {
                   <TableRow>
                     <TableCell
                       colSpan={keyCols.length + 1}
-                      className="text-center py-6"
+                      className="text-center py-6 text-gray-400"
                     >
                       Loading…
                     </TableCell>
@@ -108,7 +111,7 @@ export default function ProjectsList() {
                   <TableRow>
                     <TableCell
                       colSpan={keyCols.length + 1}
-                      className="text-center py-6"
+                      className="text-center py-6 text-gray-400"
                     >
                       No data
                     </TableCell>
@@ -116,11 +119,11 @@ export default function ProjectsList() {
                 )}
                 {!loading &&
                   projects.map((p) => (
-                    <TableRow key={p.id}>
+                    <TableRow key={p.id} className="hover:bg-gray-800">
                       {keyCols.map((k) => (
                         <TableCell
                           key={k}
-                          className="max-w-[180px] truncate"
+                          className="max-w-[180px] truncate text-gray-200"
                           title={String(p[k] ?? "-")}
                         >
                           {String(p[k] ?? "-")}
@@ -131,6 +134,7 @@ export default function ProjectsList() {
                           variant="ghost"
                           onClick={() => setOpenId(p.id)}
                           title="Quick view"
+                          className="text-white hover:bg-gray-700"
                         >
                           🔍
                         </Button>
@@ -142,7 +146,7 @@ export default function ProjectsList() {
                         </Link>
                         <Link
                           href={`/projects/${p.id}`}
-                          className="px-3 py-2 rounded-xl text-sm bg-gray-900 text-white"
+                          className="px-3 py-2 rounded-xl text-sm bg-gray-700 text-white"
                         >
                           Open
                         </Link>
@@ -155,21 +159,26 @@ export default function ProjectsList() {
         </CardContent>
       </Card>
 
+      {/* Quick View Dialog */}
       <Dialog
         open={openId !== null}
         onOpenChange={(o) => {
           if (!o) setOpenId(null);
         }}
       >
-        <DialogHeader>
+        <DialogHeader className="bg-gradient-to-r from-gray-800 to-gray-900 text-white flex justify-between items-center p-4 rounded-t-xl">
           <div className="font-semibold">
             Project #{selected?.id} — {selected?.customer_name || "Untitled"}
           </div>
-          <button onClick={() => setOpenId(null)} className="px-2 py-1">
+          <button
+            onClick={() => setOpenId(null)}
+            className="px-2 py-1 hover:bg-gray-700 rounded"
+          >
             ✖
           </button>
         </DialogHeader>
-        <DialogContent className="max-h-[70vh] overflow-y-auto">
+
+        <DialogContent className="max-h-[70vh] overflow-y-auto bg-gradient-to-b from-gray-900 to-gray-800 text-white border-x border-gray-700">
           <div className="space-y-2 text-sm">
             {selected &&
               Object.keys(selected)
@@ -177,9 +186,9 @@ export default function ProjectsList() {
                 .map((key) => (
                   <div
                     key={key}
-                    className="grid grid-cols-3 gap-3 py-1 border-b"
+                    className="grid grid-cols-3 gap-3 py-2 border-b border-gray-700"
                   >
-                    <div className="font-medium col-span-1 break-words">
+                    <div className="font-medium col-span-1 break-words text-gray-300">
                       {key}
                     </div>
                     <div
@@ -192,16 +201,21 @@ export default function ProjectsList() {
                 ))}
           </div>
         </DialogContent>
-        <DialogFooter>
+
+        <DialogFooter className="bg-gray-900 text-white flex justify-between items-center p-4 rounded-b-xl">
           {selected && (
             <Link
               href={`/projects/${selected.id}`}
-              className="px-3 py-2 rounded-xl text-sm bg-gray-900 text-white"
+              className="px-3 py-2 rounded-xl text-sm bg-gray-800 text-white hover:bg-gray-700"
             >
               Open Full Page
             </Link>
           )}
-          <Button variant="secondary" onClick={() => setOpenId(null)}>
+          <Button
+            variant="secondary"
+            onClick={() => setOpenId(null)}
+            className="bg-gray-700 text-white hover:bg-gray-600"
+          >
             Close
           </Button>
         </DialogFooter>
