@@ -7,7 +7,7 @@ import {
   getOnTimeProjects,
   getProspectsTrend,
 } from "@/lib/supabaseQueries";
-import KPIsChart from "@/components/KPIsChart";
+import KPIsChart from "@/components/charts/KPIsChart";
 
 export default function DashboardPage() {
   const [prospectsByType, setProspectsByType] = useState<Record<string, number>>({});
