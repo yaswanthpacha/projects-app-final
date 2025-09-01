@@ -1,23 +1,38 @@
 "use client";
 
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
-
-const data = [
-  { name: "Product A", value: 5 },
-  { name: "Product B", value: 3 },
-  { name: "Product C", value: 1 },
-];
+import { useEffect, useState } from "react";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 export default function ProductChart() {
+  const [data, setData] = useState<{ name: string; count: number }[]>([]);
+  const supabase = createClientComponentClient();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: projects } = await supabase.from("projects").select("by_product");
+      const counts: Record<string, number> = {};
+      projects?.forEach((p) => {
+        if (p.by_product) {
+          counts[p.by_product] = (counts[p.by_product] || 0) + 1;
+        }
+      });
+      setData(Object.entries(counts).map(([name, count]) => ({ name, count })));
+    };
+    fetchData();
+  }, [supabase]);
+
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={data}>
-        <XAxis dataKey="name" />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        <Bar dataKey="value" fill="#3B82F6" />
-      </BarChart>
-    </ResponsiveContainer>
+    <div className="h-72">
+      <ResponsiveContainer>
+        <BarChart data={data}>
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Bar dataKey="count" fill="#82ca9d" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
